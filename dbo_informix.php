@@ -906,6 +906,71 @@ class DboInformix extends DboSource
 	function truncate($table) {
 		return $this->execute('DELETE FROM ' . $this->fullTableName($table));
 	}
+	
+	
+	function update(&$model, $fields = array(), $values = null, $conditions = null) {
+		$updates = array();
+
+		if ($values == null) {
+			$combined = $fields;
+		} else {
+			$combined = array_combine($fields, $values);
+		}
+		foreach ($combined as $field => $value) {
+		  // check si el field es de tipo serial
+		  if ($model->getColumnType($field) == 'serial') {
+        continue;
+      }
+			if ($value === null) {
+				//$updates[] = $model->escapeField($field) . ' = NULL';
+				$updates[] = $this->fullTableName($model).'.'.$field . ' = NULL';
+			} else {
+				//$update = $model->escapeField($field) . ' = ';
+				$update = $this->fullTableName($model).'.'.$field . ' = ';
+				if ($conditions == null) {
+					$update .= $this->value($value, $model->getColumnType($field));
+				} else {
+					$update .= $value;
+				}
+				$updates[] =  $update;
+			}
+		}
+		$conditions = $this->_UpdateConditions($model, $conditions);
+		if ($conditions === false) {
+			return false;
+		}
+		$fields = join(', ', $updates);
+		$table = $this->fullTableName($model);
+		$conditions = $this->conditions($conditions);
+		$alias = $this->name($model->alias);
+		$joins = implode(' ', $this->_getJoins($model));
+
+		if (!$this->execute($this->renderStatement('update', compact('table', 'alias', 'joins', 'fields', 'conditions')))) {
+			$model->onError();
+			return false;
+		}
+		return true;
+	}
+
+/**
+ * Creates a default set of conditions from the model if $conditions is null/empty.
+ *
+ * @param object $model
+ * @param mixed  $conditions
+ * @return mixed
+ */
+	function _UpdateConditions(&$model, $conditions) {
+		if (!empty($conditions)) {
+			return $conditions;
+		}
+		if (!$model->exists()) {
+			return false;
+		}
+		$fullname = $this->fullTableName($model).'.'.$model->primaryKey;
+		
+		return array("{$fullname}" => (array)$model->getID());
+	}
+
 }
 
 
