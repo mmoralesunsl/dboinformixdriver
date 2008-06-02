@@ -32,6 +32,17 @@ if (!extension_loaded('informix'))
     {
         dl('informix.so');
     }
+
+    // If on, select statements return the contents of a text blob instead of its id.
+     ini_set('ifx.textasvarchar','1');
+
+    // If on, select statements return the contents of a byte blob instead of its id.
+    ini_set('ifx.byteasvarchar','1');
+
+    // Trailing blanks are stripped from fixed-length char columns.  May help the
+    // life of Informix SE users.
+    ini_set('ifx.charasvarchar','1');
+
 }
 
 /**
@@ -58,24 +69,25 @@ class DboInformix extends DboSource
      *
      * @var array
      */
-    var $_baseConfig = array('persistent' => false, 
-                             'host'       => 'localhost', 
-                             'login'      => 'root', 
-                             'password'   => '', 
-                             'database'   => 'cake', 
+    var $_baseConfig = array('persistent' => false,
+                             'host'       => 'localhost',
+                             'login'      => 'root',
+                             'password'   => '',
+                             'database'   => 'cake',
                              'connect'    => 'ifx_connect');
-                             
+
     var $columns = array('primary_key' => array('name' => 'serial NOT NULL'),
-                         'string' => array('name' => 'varchar', 'limit' => '255'), 
-                         'text' => array('name' =>   'text'), 
+                         'serial' => array('name' => 'serial'),
+                         'string' => array('name' => 'varchar', 'limit' => '255'),
+                         'text' => array('name' =>   'text'),
                          'integer' => array('name' => 'integer', 'formatter' => 'intval'),
-                         'float' => array('name' => 'float', 'formatter' => 'floatval'), 
-                         'datetime' =>  array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-                         'timestamp' => array('name' => 'datetime', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'), 
-                         'time' => array('name' => 'datetime', 'format' => 'H:i:s', 'formatter' => 'date'), 
-                         'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'), 
-                         'binary' => array('name' => 'blob'), 
-                         'boolean' => array('name' => 'integer', 'limit' => '1'), 
+                         'float' => array('name' => 'float', 'formatter' => 'floatval'),
+                         'datetime' =>  array('name' => 'datetime year to second', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+                         'timestamp' => array('name' => 'datetime year to fraction', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+                         'time' => array('name' => 'datetime hour to second ', 'format' => 'H:i:s', 'formatter' => 'date'),
+                         'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
+                         'binary' => array('name' => 'blob'),
+                         'boolean' => array('name' => 'integer', 'limit' => '1'),
                          'number' => array('name' => 'numeric'), );
 
 
@@ -232,7 +244,7 @@ class DboInformix extends DboSource
 
     }
 
-    
+
     function resultSet(&$results)
     {
 
@@ -275,7 +287,7 @@ class DboInformix extends DboSource
     function fetchResult()
     {
         if ($this->_result) {
-          if (isset($this->limit) && ($this->limit !== NULL)) 
+          if (isset($this->limit) && ($this->limit !== NULL))
           {
             if ($this->num_record <= ($this->offset + $this->limit)) {
               $record = $this->num_record;
@@ -285,13 +297,13 @@ class DboInformix extends DboSource
               $this->offset = NULL;
               return NULL;
             }
-          } 
-          else 
+          }
+          else
           {
             $record = "NEXT";
           }
-        }      
-        
+        }
+
         if ($row = ifx_fetch_row($this->_result, $record))
         {
 
@@ -393,11 +405,11 @@ class DboInformix extends DboSource
             $props = explode(';', $properties_string);
 
             $fields[$fieldname] = array(
-                'type' => $this->column($props[0]), 
+                'type' => $this->column($props[0]),
                 'length' => $props[1],
-                'precision' => $props[2], 
-                'scale' => $props[3], 
-                'null' => $props[4] == 'N' ? false : true, 
+                'precision' => $props[2],
+                'scale' => $props[3],
+                'null' => $props[4] == 'N' ? false : true,
                 );
 
         }
@@ -416,14 +428,12 @@ class DboInformix extends DboSource
      */
     function value($data, $column = null, $safe = false)
     {
-
         $parent = parent::value($data, $column, $safe);
-
+        
         if ($parent != null)
         {
             return $parent;
         }
-
 
         if ($data === null)
         {
@@ -434,31 +444,72 @@ class DboInformix extends DboSource
         {
             return "''";
         }
-
+        
         switch ($column)
         {
-            case 'boolean':
-                $data = $this->boolean((bool)$data);
+          
+            case 'date':
+                return "'" . $data . "'";
                 break;
 
+            case 'datetime':
+                return "DATETIME (" . $data . ") YEAR TO SECOND";
+                break;
+
+            case 'timestamp':
+                return "DATETIME (" . $data . ") YEAR TO FRACTION";
+                break;
+
+            case 'time': 
+                return "DATETIME (" . $data . ") HOUR TO SECOND";
+                break;
+             
+            case 'boolean':
+                return $this->boolean((bool)$data);
+                break;
+
+            case 'text':
             case 'string':
                 return "'" . $data . "'";
                 break;
-
+            
+            case 'number':                
+            case 'float':
+                if (is_string($data)) {
+                  $res = "'".trim($data)."'";
+                } else {
+                  $res = $data;
+                }    
+                return $res;
+                break;
             case 'integer':
-                return trim($data);
+                if (is_string($data)) {
+                  $res = "'".trim($data)."'";
+                } else {
+                  $res = $data;
+                }    
+                return $res;
                 break;
 
             case 'serial':
-                return trim($data);
+                if (is_string($data)) {
+                  $res = "'".trim($data)."'";
+                } else {
+                  $res = $data;
+                }    
+                return $res;
                 break;
 
             default:
-                if (ini_get('magic_quotes_gpc') != 1)
-                {
+                if (is_string($data)) {
+                  if (ini_get('magic_quotes_gpc') != 1)
+                  {
                     $data = addslashes($data);
+                  }
+                  return "'" . $data . "'";
+                } else {
+                  return $data;
                 }
-                return "'" . $data . "'";
                 break;
         }
     }
@@ -472,7 +523,6 @@ class DboInformix extends DboSource
             case 'SQLLVARCHAR':
             case 'SQLNCHAR':
             case 'SQLNVCHAR':
-            case 'SQLTEXT':
             case 'SQLVCHAR':
             case 'SQLCHAR':
             case 'SQLNCHAR':
@@ -592,7 +642,7 @@ class DboInformix extends DboSource
         {
             return 0;
         }
-            
+
     }
 
     /**
@@ -655,7 +705,7 @@ class DboInformix extends DboSource
 
     function limit($limit, $offset = null)
     {
-        if($limit) 
+        if($limit)
         {
           if ($offset == null)
           {
@@ -664,23 +714,23 @@ class DboInformix extends DboSource
           $this->offset = $offset;
           $this->limit  = $limit;
           $this->num_record = $offset + 1;
-          return 'FIRST '.($limit + $offset); 
-        } 
-        
+          return 'FIRST '.($limit + $offset);
+        }
+
         return null;
     }
 
 	function buildStatement($query, $model) {
 
-	  
+
 		$query = array_merge(array('offset' => null, 'joins' => array()), $query);
-    //echo "<b>query despues de merge</b>";pr($query);		
+    //echo "<b>query despues de merge</b>";pr($query);
     if (!empty($query['joins'])) {
 			for ($i = 0; $i < count($query['joins']); $i++) {
 				if (is_array($query['joins'][$i])) {
 					if (is_array($query['joins'][$i]['conditions'])) {
 					  foreach ($query['joins'][$i]['conditions'] as $cond) {
-              $query['conditions'][] = $cond;  
+              $query['conditions'][] = $cond;
             }
           } else {
             $query['conditions'][] = $query['joins'][$i]['conditions'];
@@ -698,8 +748,8 @@ class DboInformix extends DboSource
 			'limit' => $this->limit($query['limit'], $query['offset']),
 			'joins' => join(' ', $query['joins'])
 		));
-		
-        		
+
+
 		return $res;
 	}
 
@@ -728,9 +778,9 @@ class DboInformix extends DboSource
 
         $fields = parent::fields($model, $alias, $fields, false);
         $count = count($fields);
-        
+
         //pr($fields);
-        
+
         $orig_fields = array_flip($this->__fieldMappings);
 
         if ($count >= 1 && $fields[0] != '*' && strpos($fields[0], 'COUNT(*)') === false)
@@ -739,9 +789,9 @@ class DboInformix extends DboSource
             {
                 $hasDot = strrpos($fields[$i], '.');
                 $hasAs = !(strpos($fields[$i], ' AS ') === FALSE);
-                
-                $orig_fields = array_flip($this->__fieldMappings);                
-                
+
+                $orig_fields = array_flip($this->__fieldMappings);
+
                 $fieldAlias = count($this->__fieldMappings);
 
                 if ($hasAs) {// si tiene As no hago nada
@@ -756,8 +806,8 @@ class DboInformix extends DboSource
                         $alias_field  = strtolower($tablealias . '__' . $fieldAlias);
                         $this->__fieldMappings[$alias_field] = $qualified_name;
                         $fields[$i] = $this->name($qualified_name) . ' AS ' . $this->name($alias_field);
-                    }                
-                 } else { //no tiene AS ni punto 
+                    }
+                 } else { //no tiene AS ni punto
                     $qualified_name = $alias . '.' . $fields[$i];
                     if (key_exists($qualified_name, $orig_fields)) {
                         $alias_field    = $orig_fields[$qualified_name];
@@ -767,7 +817,7 @@ class DboInformix extends DboSource
                         $this->__fieldMappings[$alias_field] = $qualified_name;
                         $fields[$i] = $this->name($qualified_name)  . ' AS ' . $this->name($alias_field) ;
                     }
-                } 
+                }
             }
         }
 
@@ -835,17 +885,27 @@ class DboInformix extends DboSource
      * @param array $data Query data
      * @return string
      */
-    
+
     function renderStatement($type, $data) {
       extract($data);
-  
+
       if (strtolower($type) == 'select') {
         return "SELECT {$limit} {$fields} FROM {$table} {$alias} {$joins} {$conditions} {$order}";
       } else {
         return parent::renderStatement($type, $data);
       }
     }
-      
+/**
+ * Deletes all the records in a table and resets the count of the auto-incrementing
+ * primary key, where applicable.
+ *
+ * @param mixed $table A string or model class representing the table to be truncated
+ * @return boolean	SQL TRUNCATE TABLE statement, false if not applicable.
+ * @access public
+ */
+	function truncate($table) {
+		return $this->execute('DELETE FROM ' . $this->fullTableName($table));
+	}
 }
 
 
