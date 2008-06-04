@@ -77,7 +77,7 @@ class DboInformix extends DboSource
                              'connect'    => 'ifx_connect');
 
     var $columns = array('primary_key' => array('name' => 'serial NOT NULL'),
-                         'serial' => array('name' => 'serial'),
+                         //'serial' => array('name' => 'serial'), // no cumple el estandar
                          'string' => array('name' => 'varchar', 'limit' => '255'),
                          'text' => array('name' =>   'text'),
                          'integer' => array('name' => 'integer', 'formatter' => 'intval'),
@@ -917,15 +917,15 @@ class DboInformix extends DboSource
 			$combined = array_combine($fields, $values);
 		}
 		foreach ($combined as $field => $value) {
-		  // check si el field es de tipo serial
+		  // check if field datatype is serial
 		  if ($model->getColumnType($field) == 'serial') {
         continue;
       }
 			if ($value === null) {
-				//$updates[] = $model->escapeField($field) . ' = NULL';
+
 				$updates[] = $this->fullTableName($model).'.'.$field . ' = NULL';
 			} else {
-				//$update = $model->escapeField($field) . ' = ';
+
 				$update = $this->fullTableName($model).'.'.$field . ' = ';
 				if ($conditions == null) {
 					$update .= $this->value($value, $model->getColumnType($field));
@@ -971,8 +971,30 @@ class DboInformix extends DboSource
 		return array("{$fullname}" => (array)$model->getID());
 	}
 
+	/**
+ * Generate a database-native column schema string
+ * map key=>primary extra=>autoincrement to serial NOT NULL
+ *  
+ * @param array $column An array structured like the following: array('name'=>'value', 'type'=>'value'[, options]),
+ *                      where options can be 'default', 'length', or 'key'.
+ * @return string
+ */
+	function buildColumn($column) {
+    $res = parent::buildColumn($column);
+
+    if ($res == NULL) {
+      return NULL;
+    } else {
+      $name = $type = null;
+		  $column = array_merge(array('null' => true), $column);
+		  extract($column);
+      $out = $res;		
+  		if (isset($column['key']) && $column['key'] == 'primary' && (isset($column['extra']) && $column['extra'] == 'auto_increment')) {
+  			$out = $this->name($name) . ' serial NOT NULL';
+  		}
+    }
+    return $out;
+	}
 }
-
-
 
 ?>
