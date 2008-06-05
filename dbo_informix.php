@@ -34,14 +34,14 @@ if (!extension_loaded('informix'))
     }
 
     // If on, select statements return the contents of a text blob instead of its id.
-     ini_set('ifx.textasvarchar','1');
+    ini_set('ifx.textasvarchar', '1');
 
     // If on, select statements return the contents of a byte blob instead of its id.
-    ini_set('ifx.byteasvarchar','1');
+    ini_set('ifx.byteasvarchar', '1');
 
     // Trailing blanks are stripped from fixed-length char columns.  May help the
     // life of Informix SE users.
-    ini_set('ifx.charasvarchar','1');
+    ini_set('ifx.charasvarchar', '1');
 
 }
 
@@ -69,26 +69,21 @@ class DboInformix extends DboSource
      *
      * @var array
      */
-    var $_baseConfig = array('persistent' => false,
-                             'host'       => 'localhost',
-                             'login'      => 'root',
-                             'password'   => '',
-                             'database'   => 'cake',
-                             'connect'    => 'ifx_connect');
+    var $_baseConfig = array('persistent' => false, 'host' => 'localhost', 'login' =>
+        'root', 'password' => '', 'database' => 'cake', 'connect' => 'ifx_connect');
 
     var $columns = array('primary_key' => array('name' => 'serial NOT NULL'),
-                         //'serial' => array('name' => 'serial'), // no cumple el estandar
-                         'string' => array('name' => 'varchar', 'limit' => '255'),
-                         'text' => array('name' =>   'text'),
-                         'integer' => array('name' => 'integer', 'formatter' => 'intval'),
-                         'float' => array('name' => 'float', 'formatter' => 'floatval'),
-                         'datetime' =>  array('name' => 'datetime year to second', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-                         'timestamp' => array('name' => 'datetime year to fraction', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-                         'time' => array('name' => 'datetime hour to second ', 'format' => 'H:i:s', 'formatter' => 'date'),
-                         'date' => array('name' => 'date', 'format' => 'Y-m-d', 'formatter' => 'date'),
-                         'binary' => array('name' => 'blob'),
-                         'boolean' => array('name' => 'integer', 'limit' => '1'),
-                         'number' => array('name' => 'numeric'), );
+        //'serial' => array('name' => 'serial'), // no cumple el estandar
+        'string' => array('name' => 'varchar', 'limit' => '255'), 'text' => array('name' =>
+        'text'), 'integer' => array('name' => 'integer', 'formatter' => 'intval'),
+        'float' => array('name' => 'float', 'formatter' => 'floatval'), 'datetime' =>
+        array('name' => 'datetime year to second', 'format' => 'Y-m-d H:i:s',
+        'formatter' => 'date'), 'timestamp' => array('name' =>
+        'datetime year to fraction', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+        'time' => array('name' => 'datetime hour to second ', 'format' => 'H:i:s',
+        'formatter' => 'date'), 'date' => array('name' => 'date', 'format' => 'Y-m-d',
+        'formatter' => 'date'), 'binary' => array('name' => 'blob'), 'boolean' => array
+        ('name' => 'integer', 'limit' => '1'), 'number' => array('name' => 'numeric'), );
 
 
     /**
@@ -286,22 +281,26 @@ class DboInformix extends DboSource
 
     function fetchResult()
     {
-        if ($this->_result) {
-          if (isset($this->limit) && ($this->limit !== NULL))
-          {
-            if ($this->num_record <= ($this->offset + $this->limit)) {
-              $record = $this->num_record;
-              $this->num_record++;
-            } else {
-              $this->limit  = NULL;
-              $this->offset = NULL;
-              return NULL;
+        if ($this->_result)
+        {
+            if (isset($this->limit) && ($this->limit !== null))
+            {
+                if ($this->num_record <= ($this->offset + $this->limit))
+                {
+                    $record = $this->num_record;
+                    $this->num_record++;
+                }
+                else
+                {
+                    $this->limit = null;
+                    $this->offset = null;
+                    return null;
+                }
             }
-          }
-          else
-          {
-            $record = "NEXT";
-          }
+            else
+            {
+                $record = "NEXT";
+            }
         }
 
         if ($row = ifx_fetch_row($this->_result, $record))
@@ -404,13 +403,8 @@ class DboInformix extends DboSource
         {
             $props = explode(';', $properties_string);
 
-            $fields[$fieldname] = array(
-                'type' => $this->column($props[0]),
-                'length' => $props[1],
-                'precision' => $props[2],
-                'scale' => $props[3],
-                'null' => $props[4] == 'N' ? false : true,
-                );
+            $fields[$fieldname] = array('type' => $this->column($props[0]), 'length' => $props[1],
+                'precision' => $props[2], 'scale' => $props[3], 'null' => $props[4] == 'N' ? false : true, );
 
         }
         $this->__cacheDescription($this->fullTableName($model, false), $fields);
@@ -429,7 +423,7 @@ class DboInformix extends DboSource
     function value($data, $column = null, $safe = false)
     {
         $parent = parent::value($data, $column, $safe);
-        
+
         if ($parent != null)
         {
             return $parent;
@@ -444,10 +438,10 @@ class DboInformix extends DboSource
         {
             return "''";
         }
-        
+
         switch ($column)
         {
-          
+
             case 'date':
                 return "'" . $data . "'";
                 break;
@@ -460,10 +454,10 @@ class DboInformix extends DboSource
                 return "DATETIME (" . $data . ") YEAR TO FRACTION";
                 break;
 
-            case 'time': 
+            case 'time':
                 return "DATETIME (" . $data . ") HOUR TO SECOND";
                 break;
-             
+
             case 'boolean':
                 return $this->boolean((bool)$data);
                 break;
@@ -472,43 +466,55 @@ class DboInformix extends DboSource
             case 'string':
                 return "'" . $data . "'";
                 break;
-            
-            case 'number':                
+
+            case 'number':
             case 'float':
-                if (is_string($data)) {
-                  $res = "'".trim($data)."'";
-                } else {
-                  $res = $data;
-                }    
+                if (is_string($data))
+                {
+                    $res = "'" . trim($data) . "'";
+                }
+                else
+                {
+                    $res = $data;
+                }
                 return $res;
                 break;
             case 'integer':
-                if (is_string($data)) {
-                  $res = "'".trim($data)."'";
-                } else {
-                  $res = $data;
-                }    
+                if (is_string($data))
+                {
+                    $res = "'" . trim($data) . "'";
+                }
+                else
+                {
+                    $res = $data;
+                }
                 return $res;
                 break;
 
             case 'serial':
-                if (is_string($data)) {
-                  $res = "'".trim($data)."'";
-                } else {
-                  $res = $data;
-                }    
+                if (is_string($data))
+                {
+                    $res = "'" . trim($data) . "'";
+                }
+                else
+                {
+                    $res = $data;
+                }
                 return $res;
                 break;
 
             default:
-                if (is_string($data)) {
-                  if (ini_get('magic_quotes_gpc') != 1)
-                  {
-                    $data = addslashes($data);
-                  }
-                  return "'" . $data . "'";
-                } else {
-                  return $data;
+                if (is_string($data))
+                {
+                    if (ini_get('magic_quotes_gpc') != 1)
+                    {
+                        $data = addslashes($data);
+                    }
+                    return "'" . $data . "'";
+                }
+                else
+                {
+                    return $data;
                 }
                 break;
         }
@@ -705,53 +711,57 @@ class DboInformix extends DboSource
 
     function limit($limit, $offset = null)
     {
-        if($limit)
+        if ($limit)
         {
-          if ($offset == null)
-          {
-            $offset = 0;
-          }
-          $this->offset = $offset;
-          $this->limit  = $limit;
-          $this->num_record = $offset + 1;
-          return 'FIRST '.($limit + $offset);
+            if ($offset == null)
+            {
+                $offset = 0;
+            }
+            $this->offset = $offset;
+            $this->limit = $limit;
+            $this->num_record = $offset + 1;
+            return 'FIRST ' . ($limit + $offset);
         }
 
         return null;
     }
 
-	function buildStatement($query, $model) {
+    function buildStatement($query, $model)
+    {
 
 
-		$query = array_merge(array('offset' => null, 'joins' => array()), $query);
-    //echo "<b>query despues de merge</b>";pr($query);
-    if (!empty($query['joins'])) {
-			for ($i = 0; $i < count($query['joins']); $i++) {
-				if (is_array($query['joins'][$i])) {
-					if (is_array($query['joins'][$i]['conditions'])) {
-					  foreach ($query['joins'][$i]['conditions'] as $cond) {
-              $query['conditions'][] = $cond;
+        $query = array_merge(array('offset' => null, 'joins' => array()), $query);
+        //echo "<b>query despues de merge</b>";pr($query);
+        if (!empty($query['joins']))
+        {
+            for ($i = 0; $i < count($query['joins']); $i++)
+            {
+                if (is_array($query['joins'][$i]))
+                {
+                    if (is_array($query['joins'][$i]['conditions']))
+                    {
+                        foreach ($query['joins'][$i]['conditions'] as $cond)
+                        {
+                            $query['conditions'][] = $cond;
+                        }
+                    }
+                    else
+                    {
+                        $query['conditions'][] = $query['joins'][$i]['conditions'];
+                    }
+                    $query['joins'][$i] = $this->buildJoinStatement($query['joins'][$i]);
+                }
             }
-          } else {
-            $query['conditions'][] = $query['joins'][$i]['conditions'];
-          }
-          $query['joins'][$i] = $this->buildJoinStatement($query['joins'][$i]);
-				}
-			}
-		}
-		$res = $this->renderStatement('select', array(
-			'conditions' => $this->conditions($query['conditions']),
-			'fields' => join(', ', $query['fields']),
-			'table' => $query['table'],
-			'alias' => $this->alias . $this->name($query['alias']),
-			'order' => $this->order($query['order']),
-			'limit' => $this->limit($query['limit'], $query['offset']),
-			'joins' => join(' ', $query['joins'])
-		));
+        }
+        $res = $this->renderStatement('select', array('conditions' => $this->conditions
+            ($query['conditions']), 'fields' => join(', ', $query['fields']), 'table' => $query['table'],
+            'alias' => $this->alias . $this->name($query['alias']), 'order' => $this->order
+            ($query['order']), 'limit' => $this->limit($query['limit'], $query['offset']),
+            'joins' => join(' ', $query['joins'])));
 
 
-		return $res;
-	}
+        return $res;
+    }
 
 
     function renderJoinStatement($data)
@@ -788,40 +798,48 @@ class DboInformix extends DboSource
             for ($i = 0; $i < $count; $i++)
             {
                 $hasDot = strrpos($fields[$i], '.');
-                $hasAs = !(strpos($fields[$i], ' AS ') === FALSE);
+                $hasAs = !(strpos($fields[$i], ' AS ') === false);
 
                 $orig_fields = array_flip($this->__fieldMappings);
 
                 $fieldAlias = count($this->__fieldMappings);
 
-                if ($hasAs) {// si tiene As no hago nada
-                } elseif ($hasDot) {  // no tiene As pero tiene punto
+                if ($hasAs)
+                { // si tiene As no hago nada
+                } elseif ($hasDot)
+                { // no tiene As pero tiene punto
                     $qualified_name = $fields[$i];
-                    if (key_exists($qualified_name, $orig_fields)) {
+                    if (key_exists($qualified_name, $orig_fields))
+                    {
                         $qualified_name = $fields[$i];
-                        $alias_field    = $orig_fields[$qualified_name];
-                        $fields[$i] = $this->name($qualified_name) . ' AS '. $this->name($alias_field);
-                    } else {
-                        list ($tablealias, $fieldname) = $build = explode('.', $qualified_name);
-                        $alias_field  = strtolower($tablealias . '__' . $fieldAlias);
+                        $alias_field = $orig_fields[$qualified_name];
+                        $fields[$i] = $this->name($qualified_name) . ' AS ' . $this->name($alias_field);
+                    }
+                    else
+                    {
+                        list($tablealias, $fieldname) = $build = explode('.', $qualified_name);
+                        $alias_field = strtolower($tablealias . '__' . $fieldAlias);
                         $this->__fieldMappings[$alias_field] = $qualified_name;
                         $fields[$i] = $this->name($qualified_name) . ' AS ' . $this->name($alias_field);
                     }
-                 } else { //no tiene AS ni punto
+                }
+                else
+                { //no tiene AS ni punto
                     $qualified_name = $alias . '.' . $fields[$i];
-                    if (key_exists($qualified_name, $orig_fields)) {
-                        $alias_field    = $orig_fields[$qualified_name];
-                        $fields[$i] = $this->name($qualified_name) . ' AS '. $this->name($alias_field);
-                    } else {
+                    if (key_exists($qualified_name, $orig_fields))
+                    {
+                        $alias_field = $orig_fields[$qualified_name];
+                        $fields[$i] = $this->name($qualified_name) . ' AS ' . $this->name($alias_field);
+                    }
+                    else
+                    {
                         $alias_field = strtolower($alias . '__' . $fieldAlias);
                         $this->__fieldMappings[$alias_field] = $qualified_name;
-                        $fields[$i] = $this->name($qualified_name)  . ' AS ' . $this->name($alias_field) ;
+                        $fields[$i] = $this->name($qualified_name) . ' AS ' . $this->name($alias_field);
                     }
                 }
             }
         }
-
-
 
 
         return $fields;
@@ -886,115 +904,144 @@ class DboInformix extends DboSource
      * @return string
      */
 
-    function renderStatement($type, $data) {
-      extract($data);
+    function renderStatement($type, $data)
+    {
+        extract($data);
 
-      if (strtolower($type) == 'select') {
-        return "SELECT {$limit} {$fields} FROM {$table} {$alias} {$joins} {$conditions} {$order}";
-      } else {
-        return parent::renderStatement($type, $data);
-      }
+        if (strtolower($type) == 'select')
+        {
+            return "SELECT {$limit} {$fields} FROM {$table} {$alias} {$joins} {$conditions} {$order}";
+        }
+        else
+        {
+            return parent::renderStatement($type, $data);
+        }
     }
-/**
- * Deletes all the records in a table and resets the count of the auto-incrementing
- * primary key, where applicable.
- *
- * @param mixed $table A string or model class representing the table to be truncated
- * @return boolean	SQL TRUNCATE TABLE statement, false if not applicable.
- * @access public
- */
-	function truncate($table) {
-		return $this->execute('DELETE FROM ' . $this->fullTableName($table));
-	}
-	
-	
-	function update(&$model, $fields = array(), $values = null, $conditions = null) {
-		$updates = array();
-
-		if ($values == null) {
-			$combined = $fields;
-		} else {
-			$combined = array_combine($fields, $values);
-		}
-		foreach ($combined as $field => $value) {
-		  // check if field datatype is serial
-		  if ($model->getColumnType($field) == 'serial') {
-        continue;
-      }
-			if ($value === null) {
-
-				$updates[] = $this->fullTableName($model).'.'.$field . ' = NULL';
-			} else {
-
-				$update = $this->fullTableName($model).'.'.$field . ' = ';
-				if ($conditions == null) {
-					$update .= $this->value($value, $model->getColumnType($field));
-				} else {
-					$update .= $value;
-				}
-				$updates[] =  $update;
-			}
-		}
-		$conditions = $this->_UpdateConditions($model, $conditions);
-		if ($conditions === false) {
-			return false;
-		}
-		$fields = join(', ', $updates);
-		$table = $this->fullTableName($model);
-		$conditions = $this->conditions($conditions);
-		$alias = $this->name($model->alias);
-		$joins = implode(' ', $this->_getJoins($model));
-
-		if (!$this->execute($this->renderStatement('update', compact('table', 'alias', 'joins', 'fields', 'conditions')))) {
-			$model->onError();
-			return false;
-		}
-		return true;
-	}
-
-/**
- * Creates a default set of conditions from the model if $conditions is null/empty.
- *
- * @param object $model
- * @param mixed  $conditions
- * @return mixed
- */
-	function _UpdateConditions(&$model, $conditions) {
-		if (!empty($conditions)) {
-			return $conditions;
-		}
-		if (!$model->exists()) {
-			return false;
-		}
-		$fullname = $this->fullTableName($model).'.'.$model->primaryKey;
-		
-		return array("{$fullname}" => (array)$model->getID());
-	}
-
-	/**
- * Generate a database-native column schema string
- * map key=>primary extra=>autoincrement to serial NOT NULL
- *  
- * @param array $column An array structured like the following: array('name'=>'value', 'type'=>'value'[, options]),
- *                      where options can be 'default', 'length', or 'key'.
- * @return string
- */
-	function buildColumn($column) {
-    $res = parent::buildColumn($column);
-
-    if ($res == NULL) {
-      return NULL;
-    } else {
-      $name = $type = null;
-		  $column = array_merge(array('null' => true), $column);
-		  extract($column);
-      $out = $res;		
-  		if (isset($column['key']) && $column['key'] == 'primary' && (isset($column['extra']) && $column['extra'] == 'auto_increment')) {
-  			$out = $this->name($name) . ' serial NOT NULL';
-  		}
+    /**
+     * Deletes all the records in a table and resets the count of the auto-incrementing
+     * primary key, where applicable.
+     *
+     * @param mixed $table A string or model class representing the table to be truncated
+     * @return boolean	SQL TRUNCATE TABLE statement, false if not applicable.
+     * @access public
+     */
+    function truncate($table)
+    {
+        return $this->execute('DELETE FROM ' . $this->fullTableName($table));
     }
-    return $out;
-	}
+
+
+    function update(&$model, $fields = array(), $values = null, $conditions = null)
+    {
+        $updates = array();
+
+        if ($values == null)
+        {
+            $combined = $fields;
+        }
+        else
+        {
+            $combined = array_combine($fields, $values);
+        }
+        foreach ($combined as $field => $value)
+        {
+            // check if field datatype is serial
+            if ($model->getColumnType($field) == 'serial')
+            {
+                continue;
+            }
+            if ($value === null)
+            {
+
+                $updates[] = $this->fullTableName($model) . '.' . $field . ' = NULL';
+            }
+            else
+            {
+
+                $update = $this->fullTableName($model) . '.' . $field . ' = ';
+                if ($conditions == null)
+                {
+                    $update .= $this->value($value, $model->getColumnType($field));
+                }
+                else
+                {
+                    $update .= $value;
+                }
+                $updates[] = $update;
+            }
+        }
+        $conditions = $this->_UpdateConditions($model, $conditions);
+        if ($conditions === false)
+        {
+            return false;
+        }
+        $fields = join(', ', $updates);
+        $table = $this->fullTableName($model);
+        $conditions = $this->conditions($conditions);
+        $alias = $this->name($model->alias);
+        $joins = implode(' ', $this->_getJoins($model));
+
+        if (!$this->execute($this->renderStatement('update', compact('table', 'alias',
+            'joins', 'fields', 'conditions'))))
+        {
+            $model->onError();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Creates a default set of conditions from the model if $conditions is null/empty.
+     *
+     * @param object $model
+     * @param mixed  $conditions
+     * @return mixed
+     */
+    function _UpdateConditions(&$model, $conditions)
+    {
+        if (!empty($conditions))
+        {
+            return $conditions;
+        }
+        if (!$model->exists())
+        {
+            return false;
+        }
+        $fullname = $this->fullTableName($model) . '.' . $model->primaryKey;
+
+        return array("{$fullname}" => (array )$model->getID());
+    }
+
+    /**
+     * Generate a database-native column schema string
+     * map key=>primary extra=>autoincrement to serial NOT NULL
+     *  
+     * @param array $column An array structured like the following: array('name'=>'value', 'type'=>'value'[, options]),
+     *                      where options can be 'default', 'length', or 'key'.
+     * @return string
+     */
+    function buildColumn($column)
+    {
+        $res = parent::buildColumn($column);
+
+        if ($res == null)
+        {
+            return null;
+        }
+        else
+        {
+            $name = $type = null;
+            $column = array_merge(array('null' => true), $column);
+            extract($column);
+            $out = $res;
+            if (isset($column['key']) && $column['key'] == 'primary' && (isset($column['extra']) &&
+                $column['extra'] == 'auto_increment'))
+            {
+                $out = $this->name($name) . ' serial NOT NULL';
+            }
+        }
+        return $out;
+    }
 }
 
 ?>
