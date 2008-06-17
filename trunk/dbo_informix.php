@@ -150,61 +150,17 @@ class DboInformix extends DboSource
      */
     function _execute($sql)
     {
-        if (!preg_match('/[\b]*select(?:.|\n)*/i', $sql))
-        {
+        if (!preg_match('/[\b]*select(?:.|\n)*/i', $sql)) {
             $this->limit = null;
-            $this->_tabname = false;
-        }
-        else
-        {
-            preg_match('/.*FROM(.*)WHERE.*/i', $sql, $mitabla);
-            $tab = $alias = "";
-            $this->_tabnames = array();
-            $this->_aliases = array();
-            if (strpos($mitabla[1], ',') > 0)
-            {
-                $afroms = explode(',', $mitabla[1]);
-                foreach ($afroms as $unFrom)
-                {
-                    $unFrom = trim(str_replace('OUTER', '', $unFrom));
-                    if (strpos($unFrom, " AS ") > 0)
-                    {
-                        list($tab, $alias) = explode(" AS ", $unFrom);
-                        $this->_tabnames[] = trim($tab);
-                        $this->_aliases[] = trim($alias);
-                    }
-                    else
-                    {
-                        $this->_tabnames[] = false;
-                        $this->_aliases[] = trim($unFrom);
-                    }
-                }
-            }
-            else
-            {
-                if (strpos($mitabla[1], " AS ") > 0)
-                {
-                    list($tab, $alias) = explode(" AS ", $mitabla[1]);
-                    $this->_tabnames[] = trim($tab);
-                    $this->_aliases[] = trim($alias);
-                }
-                else
-                {
-                    $this->_tabnames[] = false;
-                    $this->_aliases[] = trim($mitabla[1]);
-                }
-            }
-            $this->_tabname = trim($this->_aliases[0]);
         }
         if ($this->limit != null)
         {
             return ifx_query($sql, $this->connection, IFX_SCROLL);
-            //return ifx_query($sql, $this->connection);
         }
         else
         {
             return ifx_query($sql, $this->connection);
-        }
+        }      
     }
 
     /**
@@ -308,7 +264,7 @@ class DboInformix extends DboSource
 
             $resultRow = array();
             $i = 0;
-            $tabname = ($this->_tabname) ? $this->_tabname : 0;
+
             foreach ($row as $index => $field)
             {
                 if (array_key_exists($index, $this->__fieldMappings))
@@ -318,7 +274,7 @@ class DboInformix extends DboSource
                 }
                 else
                 {
-                    $resultRow[$tabname][str_replace('"', '', $index)] = $row[$index];
+                    $resultRow[0][str_replace('"', '', $index)] = $row[$index];
                 }
 
                 $i++;
