@@ -934,11 +934,12 @@ class DboInformix extends DboSource
         $fields = join(', ', $updates);
         $table = $this->fullTableName($model);
         $conditions = $this->conditions($conditions);
-        $alias = $this->name($model->alias);
-        $joins = implode(' ', $this->_getJoins($model));
+        //$alias = $this->name($model->alias);
+        //$joins = implode(' ', $this->_getJoins($model));
 
-        if (!$this->execute($this->renderStatement('update', compact('table', 'alias',
-            'joins', 'fields', 'conditions'))))
+        //if (!$this->execute($this->renderStatement('update', compact('table', 'alias',  'joins', 'fields', 'conditions'))))
+		if (!$this->execute($this->renderStatement('update', compact('table', 'fields', 'conditions'))))
+        			
         {
             $model->onError();
             return false;
@@ -998,6 +999,25 @@ class DboInformix extends DboSource
         }
         return $out;
     }
+	function delete(&$model, $conditions = null) {
+		$query = $this->defaultConditions($model, $conditions);
+
+		if ($query === false) {
+			return false;
+		}
+
+		//$alias = $this->name($model->alias);
+		$table = $this->fullTableName($model);
+		$conditions = $this->conditions($query);
+		//$joins = implode(' ', $this->_getJoins($model));
+
+		//if ($this->execute($this->renderStatement('delete', compact('alias', 'table', 'joins', 'conditions'))) === false) {
+		if ($this->execute($this->renderStatement('delete', compact('table', 'conditions'))) === false) {
+			$model->onError();
+			return false;
+		}
+		return true;
+	}
 }
 
 ?>
