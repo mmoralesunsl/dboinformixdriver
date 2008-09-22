@@ -16,7 +16,7 @@
  *
  *  Autor para CakePHP 1.1.7 : Diego F. Quiroga - diegoq@unsl.edu.ar
  *  Autor para CakePHP 1.2 : Marcelo Morales - mmorales@unsl.edu.ar - Adaptación completa a CakePHP 1.2
- *  Bugfix: Las relaciones HABTM no eran resueltas correctamente  y tipos de datos
+ *  Thank you to Mark Wong for your help and feedback
  *  $Id$
  ********************************************************
  */
@@ -72,18 +72,22 @@ class DboInformix extends DboSource
     var $_baseConfig = array('persistent' => false, 'host' => 'localhost', 'login' =>
         'root', 'password' => '', 'database' => 'cake', 'connect' => 'ifx_connect');
 
-    var $columns = array('primary_key' => array('name' => 'serial NOT NULL'),
+    var $columns = array(
+		//'primary_key'=> array('name' => 'serial NOT NULL'),
+		'primary_key'=> array('name' => 'serial'),
         //'serial' => array('name' => 'serial'), // no cumple el estandar
-        'string' => array('name' => 'varchar', 'limit' => '255'), 'text' => array('name' =>
-        'text'), 'integer' => array('name' => 'integer', 'formatter' => 'intval'),
-        'float' => array('name' => 'float', 'formatter' => 'floatval'), 'datetime' =>
-        array('name' => 'datetime year to second', 'format' => 'Y-m-d H:i:s',
-        'formatter' => 'date'), 'timestamp' => array('name' =>
-        'datetime year to fraction', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
-        'time' => array('name' => 'datetime hour to second ', 'format' => 'H:i:s',
-        'formatter' => 'date'), 'date' => array('name' => 'date', 'format' => 'Y-m-d',
-        'formatter' => 'date'), 'binary' => array('name' => 'blob'), 'boolean' => array
-        ('name' => 'integer', 'limit' => '1'), 'number' => array('name' => 'numeric'), );
+        'string' 	=> array('name' => 'varchar', 'limit' => '255'), 
+		'text' 		=> array('name' => 'text'), 
+		'integer' 	=> array('name' => 'integer', 'formatter' => 'intval'),
+        'float' 	=> array('name' => 'float', 'formatter' => 'floatval'), 
+		'datetime' 	=> array('name' => 'datetime year to second', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'), 
+		'timestamp' => array('name' => 'datetime year to fraction', 'format' => 'Y-m-d H:i:s', 'formatter' => 'date'),
+        'time' 		=> array('name' => 'datetime hour to second ', 'format' => 'H:i:s', 'formatter' => 'date'), 
+		'date' 		=> array('name' => 'date', 'format' => 'm-d-Y','formatter' => 'date'), 
+		'binary' 	=> array('name' => 'blob'), 
+		'boolean' 	=> array('name' => 'integer', 'limit' => '1'), 
+		'number' 	=> array('name' => 'numeric'), 
+		);
 
 
     /**
@@ -119,11 +123,11 @@ class DboInformix extends DboSource
 
         if ($config['persistent'])
         {
-            $this->connection = ifx_pconnect($host, $config['login'], $config['password']);
+            $this->connection = @ifx_pconnect($host, $config['login'], $config['password']);
         }
         else
         {
-            $this->connection = $connect($host, $config['login'], $config['password']);
+            $this->connection = @$connect($host, $config['login'], $config['password']);
         }
 
         $this->connected = ($this->connection !== false);
@@ -155,11 +159,11 @@ class DboInformix extends DboSource
         }
         if ($this->limit != null)
         {
-            return ifx_query($sql, $this->connection, IFX_SCROLL);
+            return @ifx_query($sql, $this->connection, IFX_SCROLL);
         }
         else
         {
-            return ifx_query($sql, $this->connection);
+            return @ifx_query($sql, $this->connection);
         }      
     }
 
@@ -202,7 +206,7 @@ class DboInformix extends DboSource
         $this->results = &$results;
         $this->map = array();
 
-        $columns = array_keys(ifx_fieldtypes($results));
+        $columns = array_keys(@ifx_fieldtypes($results));
 
         $num_fields = count($columns);
         $index = 0;
@@ -259,7 +263,7 @@ class DboInformix extends DboSource
             }
         }
 
-        if ($row = ifx_fetch_row($this->_result, $record))
+        if ($row = @ifx_fetch_row($this->_result, $record))
         {
 
             $resultRow = array();
@@ -315,7 +319,7 @@ class DboInformix extends DboSource
         {
 
             $tables = array();
-            while ($line = ifx_fetch_row($result))
+            while ($line = @ifx_fetch_row($result))
             {
                 $tables[] = trim($line['tabname']);
             }
@@ -448,6 +452,7 @@ class DboInformix extends DboSource
                 break;
 
             case 'serial':
+			case 'serial NOT NULL':
                 if (is_string($data))
                 {
                     $res = "'" . trim($data) . "'";
@@ -587,7 +592,7 @@ class DboInformix extends DboSource
     {
         if ($this->_errorNumber() != 0)
         {
-            return ifx_errormsg($this->_errorNumber());
+            return @ifx_errormsg($this->_errorNumber());
         }
         return false;
     }
@@ -595,7 +600,7 @@ class DboInformix extends DboSource
     function _errorNumber()
     {
 
-        preg_match("/.*SQLCODE=([^\]]*)/", ifx_error(), $parse);
+        preg_match("/.*SQLCODE=([^\]]*)/", @ifx_error(), $parse);
         if (is_array($parse) && isset($parse[1]))
         {
             return (int)$parse[1];
@@ -648,7 +653,7 @@ class DboInformix extends DboSource
      */
     function lastInsertId($source = null)
     {
-        $sqlca = ifx_getsqlca($this->_result);
+        $sqlca = @ifx_getsqlca($this->_result);
         return $sqlca["sqlerrd1"];
     }
 
@@ -686,7 +691,7 @@ class DboInformix extends DboSource
     {
 
 
-        $query = array_merge(array('offset' => null, 'joins' => array()), $query);
+        $query = array_merge(array('offset' => null, 'joins' => array(), 'group' => null, 'having' => null), $query);
         //echo "<b>query despues de merge</b>";pr($query);
         if (!empty($query['joins']))
         {
@@ -709,12 +714,17 @@ class DboInformix extends DboSource
                 }
             }
         }
-        $res = $this->renderStatement('select', array('conditions' => $this->conditions
-            ($query['conditions']), 'fields' => join(', ', $query['fields']), 'table' => $query['table'],
-            'alias' => $this->alias . $this->name($query['alias']), 'order' => $this->order
-            ($query['order']), 'limit' => $this->limit($query['limit'], $query['offset']),
-            'joins' => join(' ', $query['joins'])));
-
+		$res = $this->renderStatement('select', array(
+            'conditions' => $this->conditions($query['conditions']),
+            'fields' => join(', ', $query['fields']),
+            'table' => $query['table'],
+            'alias' => $this->alias . $this->name($query['alias']),
+            'group' => $this->group($query['group']),
+			'having' => $this->having($query['having']),
+            'order' => $this->order($query['order']),
+            'limit' => $this->limit($query['limit'], $query['offset']),
+            'joins' => join(' ', $query['joins'])
+        ));
 
         return $res;
     }
@@ -864,14 +874,20 @@ class DboInformix extends DboSource
     {
         extract($data);
 
-        if (strtolower($type) == 'select')
-        {
-            return "SELECT {$limit} {$fields} FROM {$table} {$alias} {$joins} {$conditions} {$order}";
-        }
-        else
-        {
-            return parent::renderStatement($type, $data);
-        }
+    
+    	switch (strtolower($type)) {
+			case 'select':
+				return "SELECT {$limit} {$fields} FROM {$table} {$alias} {$joins} {$conditions} {$order}";
+			break;
+			case 'update':
+				return "UPDATE {$table} SET {$fields} {$conditions}";
+			break;
+			case 'delete':
+				return "DELETE  FROM {$table} {$conditions}";
+			break;
+		}
+        
+
     }
     /**
      * Deletes all the records in a table and resets the count of the auto-incrementing
@@ -909,12 +925,14 @@ class DboInformix extends DboSource
             if ($value === null)
             {
 
-                $updates[] = $this->fullTableName($model) . '.' . $field . ' = NULL';
+                //$updates[] = $this->fullTableName($model) . '.' . $field . ' = NULL';
+				$updates[] = $field . ' = NULL';
             }
             else
             {
 
-                $update = $this->fullTableName($model) . '.' . $field . ' = ';
+                //$update = $this->fullTableName($model) . '.' . $field . ' = ';
+				$update = $field . ' = ';
                 if ($conditions == null)
                 {
                     $update .= $this->value($value, $model->getColumnType($field));
@@ -964,7 +982,8 @@ class DboInformix extends DboSource
         {
             return false;
         }
-        $fullname = $this->fullTableName($model) . '.' . $model->primaryKey;
+        //$fullname = $this->fullTableName($model) . '.' . $model->primaryKey;
+		$fullname = $model->primaryKey;
 
         return array("{$fullname}" => (array )$model->getID());
     }
@@ -1017,6 +1036,39 @@ class DboInformix extends DboSource
 			return false;
 		}
 		return true;
+	}
+
+	function group($group) {
+		if (is_array($group)) {
+			return 'GROUP BY ' . join (', ',$group);
+		}elseif($group) {
+			return 'GROUP BY ' . $group;
+		} else {
+			return '';
+		}
+	}
+	function having($conditions, $quoteValues = true, $having = true) {
+		$out = $this->conditions ($conditions);
+		$clause = $out = '';
+		if (is_string($conditions) || empty($conditions) || $conditions === true) {
+			if (!preg_match('/^WHERE\\x20|^GROUP\\x20BY\\x20|^HAVING\\x20|^ORDER\\x20BY\\x20/i', $conditions, $match)) {
+				if ($having) {
+					$clause = ' HAVING ';
+				}
+			}
+			if (!trim($conditions) == '') {
+				$conditions = $this->__quoteFields($conditions);
+			}
+			return $clause . $conditions;
+		} else {
+			if ($having) {
+				$clause = ' HAVING ';
+			}
+			if (!empty($conditions)) {
+				$out = $this->conditionKeysToString($conditions, $quoteValues);
+			}
+			return $clause . join(' AND ', $out);
+		}
 	}
 }
 
